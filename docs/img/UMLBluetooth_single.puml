@@ -1,0 +1,124 @@
+@startuml
+hide empty members
+skinparam shadowing false
+
+
+' Bluetooth
+package "Bluetooth" {
+
+' Bluetooth Handler Layer
+package "Handler" {
+  interface BluetoothHandlerInterface {
+    + setElectionCallback(callback: () -> Unit)
+    + setOnDeviceDisconnectStrategy(strategy: OnDeviceDisconnectStrategy)
+    + sendMessage(message: MessageComposed, device: BluetoothDevice)
+    + broadcastMessage(message: MessageComposed)
+    + onDeviceDisconnected(socket: BluetoothSocket)
+  }
+
+  interface LobbyBluetoothHandlerInterface extends BluetoothHandlerInterface {
+    + startBluetoothServer()
+    + stopBluetoothServer()
+    + startBluetoothClientAndDiscovery()
+    + connectToDevice(deviceMac: String)
+    + onElectionTimerFinished()
+    + setServerSocketNameCallback(callback: ((String) -> Unit)?)
+  }
+
+  class BluetoothHandler implements LobbyBluetoothHandlerInterface {
+    - activity: MainActivity
+    - electionManager: BullyElectionManager
+    - deviceManager: BluetoothDeviceManager
+    - bluetoothManager: BluetoothManager
+    - bluetoothAdapter: BluetoothAdapter
+    - bluetoothClientManager: BluetoothClientManager?
+    - bluetoothServerManager: BluetoothServerManager?
+    - onDeviceDisconnectStrategy: OnDeviceDisconnectStrategy?
+    - electionCallback: (() -> Unit)?
+    - serverSocketNameCallback: ((String) -> Unit)?
+  }
+
+  object BluetoothHandlerProvider {
+    - bluetoothHandler: BluetoothHandler?
+    + initialize(activity: MainActivity)
+    + getBluetoothHandler(): BluetoothHandler
+  }
+
+  BluetoothHandlerProvider --> BluetoothHandler
+
+' Strategies
+package "Strategies" {
+  interface OnDeviceDisconnectStrategy {
+    + onDeviceDisconnect(socket: BluetoothSocket)
+  }
+
+  class GameOnDeviceDisconnectStrategy implements OnDeviceDisconnectStrategy {
+    - bluetoothHandler: BluetoothHandlerInterface
+    + onDeviceDisconnect(socket: BluetoothSocket)
+  }
+
+  class LobbyClientOnDeviceDisconnectStrategy implements OnDeviceDisconnectStrategy {
+    - bluetoothHandler: BluetoothHandlerInterface
+    - deviceManager: BluetoothDeviceManager
+    + onDeviceDisconnect(socket: BluetoothSocket)
+  }
+}
+}
+
+' Management
+package "Management" {
+  abstract class BluetoothCommunicationManager implements BasicBluetoothCommunication {
+    # bluetoothAdapter: BluetoothAdapter
+    # bluetoothThread: BasicBluetoothCommunicationThread?
+    + sendMessage(device: BluetoothDevice, message: MessageComposed)
+    + broadcastMessage(message: MessageComposed)
+    + closeConnection()
+  }
+
+  class BluetoothClientManager extends BluetoothCommunicationManager {
+    - activity: MainActivity
+    - bluetoothManager: BluetoothManager
+    - deviceManager: BluetoothDeviceManager
+    - onDeviceDisconnected: (BluetoothSocket) -> Unit
+    - receiver: BroadcastReceiver?
+    + connectToDevice(deviceMac: String)
+    - connect(device: BluetoothDevice)
+    + discoveryDevices(discoveredDevices: MutableList<BluetoothDevice>)
+  }
+
+  class BluetoothServerManager extends BluetoothCommunicationManager {
+    - activity: MainActivity
+    - deviceManager: BluetoothDeviceManager
+    - onDeviceDisconnected: (BluetoothSocket) -> Unit
+    - onServerSocketCreated: ((String) -> Unit)?
+    + startBluetoothServer()
+    + updateServerSocketNameCallback(callback: ((String) -> Unit)?)
+    + closeConnection()
+  }
+
+  interface BasicBluetoothCommunication {
+    + sendMessage(device: BluetoothDevice, message: MessageComposed)
+    + broadcastMessage(message: MessageComposed)
+    + closeConnection()
+  }
+
+  class BluetoothDeviceManager {
+      }
+
+
+
+
+}
+
+
+
+' Relationships between packages
+BluetoothHandler --> BluetoothDeviceManager
+BluetoothHandler --> BluetoothClientManager
+BluetoothHandler --> BluetoothServerManager
+BluetoothHandler --> OnDeviceDisconnectStrategy
+BluetoothHandler ..> GameOnDeviceDisconnectStrategy: uses
+BluetoothHandler ..> LobbyClientOnDeviceDisconnectStrategy: uses
+
+
+@enduml

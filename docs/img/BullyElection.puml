@@ -1,0 +1,64 @@
+@startuml BullyElectionProcess
+
+!theme plain
+title Bully Election Protocol
+
+participant "Device A\nUUID: 123" as A
+participant "Device B\nUUID: 456" as B
+participant "Device C\nUUID: 789" as C
+
+note over A, C: Device C has highest UUID, Device A has lowest
+
+== Network Setup ==
+note right of A: Each device maintains an election list with\npairs of (deviceAddress, UUID)
+
+== Election Start (Coordinator Loss Detected) ==
+note over A: Device A detects coordinator loss\nand starts election
+A -> A: addElectionListMember(deviceAddresses, UUIDs)
+A -> A: startElectionTimer()
+
+A -> B: ELECTION_REQUEST
+A -> C: ELECTION_REQUEST
+
+note right of B: B receives election from A,\ncompares UUIDs
+B -> B: getDevicesToElect()
+B -> C: ELECTION_REQUEST
+
+note right of C: C receives election messages,\ncompares UUIDs
+C -> C: getDevicesToElect() (empty - highest UUID)
+
+C --> A: ELECTION_ACK
+C --> B: ELECTION_ACK
+
+note over A: A receives OK from higher UUID\nso stops its election timer
+A -> A: stopElectionTimer()
+
+note over B: B receives OK from higher UUID\nso stops its election timer
+B -> B: stopElectionTimer()
+
+== Timer Expiration ==
+note over C: No higher UUID devices,\ntimer expires
+C -> C: becomeCoordinator()
+C -> A: CONFIGURATION
+C -> B: CONFIGURATION
+
+note over A, C: Device C becomes the coordinator
+
+== Failure Recovery ==
+note over C: If Device C fails
+A -> A: startElectionTimer()
+B -> B: startElectionTimer()
+
+A -> B: ELECTION_REQUEST
+B -> A: ELECTION_ACK
+
+note over A: A stops timer due to\nB's higher UUID
+A -> A: stopElectionTimer()
+
+note over B: B's timer expires,\nno higher UUID devices responded
+B -> B: becomeCoordinator()
+B -> A: CONFIGURATION
+
+note over A, B: Device B becomes the new coordinator
+
+@enduml

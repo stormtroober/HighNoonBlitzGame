@@ -1,0 +1,25 @@
+image: eclipse-temurin:21-jdk-alpine
+
+pages:
+  stage: deploy
+  environment: production
+  cache:
+    key: jars-cache
+    paths:
+      - jars/
+    policy: pull-push
+  script:
+    - if [ ! -d jars ]; then mkdir -p jars; fi
+    - mkdir -p public
+    - if [ ! -f jars/dokka-cli-2.0.0.jar ]; then wget -O jars/dokka-cli-2.0.0.jar "https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar"; fi
+    - if [ ! -f jars/dokka-base-2.0.0.jar ]; then wget -O jars/dokka-base-2.0.0.jar "https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0.jar"; fi
+    - if [ ! -f jars/analysis-kotlin-descriptors-2.0.0.jar ]; then wget -O jars/analysis-kotlin-descriptors-2.0.0.jar "https://repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar"; fi
+    - if [ ! -f jars/kotlinx-html-jvm-0.8.0.jar ]; then wget -O jars/kotlinx-html-jvm-0.8.0.jar "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.8.0/kotlinx-html-jvm-0.8.0.jar"; fi
+    - if [ ! -f jars/freemarker-2.3.31.jar ]; then wget -O jars/freemarker-2.3.31.jar "https://repo1.maven.org/maven2/org/freemarker/freemarker/2.3.31/freemarker-2.3.31.jar"; fi
+    - java -jar jars/dokka-cli-2.0.0.jar dokka-configuration.json
+  artifacts:
+    paths:
+      - public
+      - jars
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "master"'

@@ -1,0 +1,52 @@
+@startuml
+hide empty description
+skinparam shadowing false
+[*] --> DeviceStatus.NOT_INITIALIZED : AppStart
+
+state "Initial Choice" as RoleChoice {
+  [*] --> ServerPath : "Create Lobby"
+  [*] --> ClientPath : "Join Lobby"
+}
+
+DeviceStatus.NOT_INITIALIZED --> RoleChoice
+
+state ServerPath {
+  [*] --> ServerDiscoverable : "Be discoverable as server"
+  ServerDiscoverable --> WaitingForClients
+  WaitingForClients --> DeviceStatus.IN_LOBBY
+  DeviceStatus.IN_LOBBY --> WaitingForReady : Server only
+}
+
+state ClientPath {
+  [*] --> ConnectingToServer
+  ConnectingToServer --> DeviceStatus.IN_LOBBY : Connected
+}
+
+DeviceStatus.READY --> DeviceStatus.IN_LOBBY : "Not Ready"
+DeviceStatus.IN_LOBBY --> DeviceStatus.READY : "Ready"
+
+state WaitingForReady {
+  [*] --> CheckingReadyStatus
+  CheckingReadyStatus --> AllReady : All players ready
+}
+
+WaitingForReady.AllReady --> GameStatus.STARTED : "Start Game"
+DeviceStatus.READY --> GameStatus.STARTED : Game started by server
+GameStatus.STARTED --> DeviceStatus.IN_GAME
+
+state DeviceStatus.IN_GAME {
+  [*] --> ActiveGame
+  ActiveGame --> GameStatus.FINISHED_NORMAL : Completed normally
+  ActiveGame --> GameStatus.FINISHED_TIMEOUT : Time limit reached
+}
+
+GameStatus.FINISHED_NORMAL --> DeviceStatus.IN_GAME_WAITING : Wait for others
+GameStatus.FINISHED_TIMEOUT --> DeviceStatus.IN_GAME_WAITING : Wait for others
+
+state DeviceStatus.IN_GAME_WAITING {
+  [*] --> CheckingAllFinished
+  CheckingAllFinished --> EveryoneFinished : All players finished
+}
+
+EveryoneFinished --> DeviceStatus.IN_LOBBY : Back to Lobby
+@enduml

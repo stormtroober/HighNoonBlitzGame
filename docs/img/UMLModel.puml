@@ -1,0 +1,92 @@
+@startuml
+hide empty members
+skinparam shadowing false
+
+
+' Enums
+enum DeviceStatus {
+  NOT_INITIALIZED
+  DISCONNECTED
+  IN_LOBBY
+  READY
+  IN_GAME
+  IN_GAME_WAITING
+}
+
+enum LobbyStatus {
+  CREATED
+  STARTED
+}
+
+
+' Base classes
+abstract class Device {
+  -_status: MutableState<DeviceStatus>
+  +ready(): Boolean
+  +getStatus(): DeviceStatus
+  +setStatus(status: DeviceStatus)
+  +toString(): String
+}
+
+' Device subclasses
+class MyDevice
+
+class ExternalDevice {
+  -communicationSocket: BluetoothSocket
+  -communicationChannel: CommunicationChannelThread
+  -device: BluetoothDevice
+  +getDevice(): BluetoothDevice
+  +getCommunicationChannel(): CommunicationChannelThread
+  +closeSocket()
+  +destroy()
+  +send(message: MessageComposed)
+  +toString(): String
+}
+
+' Manager classes
+class Lobby {
+  -masterDevice: MutableState<Device?>
+  -connectedDevices: SnapshotStateList<ExternalDevice>
+  +status: LobbyStatus
+  +inGameDevices: State<List<ExternalDevice>>
+  +readyDevices: State<List<ExternalDevice>>
+  +disconnectedDevices: State<List<ExternalDevice>>
+  +inLobbyDevices: State<List<ExternalDevice>>
+  +removeConnectedDevice(device: BluetoothDevice)
+  +isReadyToStart(): Boolean
+  +clearConnectedDevices()
+  +removeMasterDevice()
+  +deviceStatusUpdate(deviceMac: String, status: DeviceStatus)
+  +getDeviceByMac(deviceMac: String): ExternalDevice?
+}
+
+class BluetoothDeviceManager {
+  -discoveredDevices: SnapshotStateList<BluetoothDevice>
+  -lobby: Lobby
+  +me: MyDevice
+  +getDiscoveredDevices(): SnapshotStateList<BluetoothDevice>
+  +getInGameDevices(): State<List<ExternalDevice>>
+  +getReadyDevices(): State<List<ExternalDevice>>
+  +getConnectedDevices(): SnapshotStateList<ExternalDevice>
+  +updateDeviceStatus(deviceMac: String, status: DeviceStatus)
+  +addNewConnection(socket: BluetoothSocket, communicationChannelThread: CommunicationChannelThread)
+  +startGame()
+  +endGame()
+  +sendBroadcastMessage(message: MessageComposed)
+  +sendMessage(deviceMac: String, message: MessageComposed)
+}
+
+' Relationships
+Device <|-- MyDevice
+Device <|-- ExternalDevice
+Device o-- DeviceStatus
+
+BluetoothDeviceManager *-- Lobby
+BluetoothDeviceManager *-- MyDevice
+BluetoothDeviceManager ..> DeviceStatus
+BluetoothDeviceManager ..> ExternalDevice
+
+Lobby o-- LobbyStatus
+Lobby o-- "0..*" ExternalDevice
+Lobby o-- Device
+@enduml

@@ -1,0 +1,80 @@
+@startuml btcommunication
+
+hide empty members
+skinparam shadowing false
+
+
+package "Bluetooth Communication" {
+  interface BasicBluetoothCommunication {
+    +sendMessage(BluetoothDevice device, MessageComposed message): void
+    +broadcastMessage(MessageComposed message): void
+    +closeConnection(): void
+  }
+
+  class BluetoothCommunicationManager
+  class BluetoothClientManager
+  class BluetoothServerManager
+
+  class CommunicationChannelThread {
+    -BluetoothSocket socket
+    -BufferedInputStream inputStream
+    -BufferedOutputStream outputStream
+    -AtomicBoolean isClosing
+    -ConcurrentLinkedQueue<MessageComposed> messageQueue
+    -AtomicBoolean isSending
+    -<BluetoothSocket, Unit> onDeviceDisconnected
+    +run(): void
+    +write(MessageComposed messageComposed): void
+    -processQueue(): void
+    -sendMessage(MessageComposed message): void
+    -processMessageForHandler(MessageComposed messageComposed): void
+    +cancel(): void
+  }
+  
+  class BasicBluetoothCommunicationThread {
+    -BluetoothDeviceManager deviceManager
+    +addConnection(BluetoothSocket socket, CommunicationChannelThread thread): void
+    +sendBroadcastMessage(MessageComposed message): void
+    +sendMessage(BluetoothDevice device, MessageComposed message): void
+    +close(): void
+  }
+  
+  class ClientThread {
+    -MainActivity activity
+    -BluetoothAdapter bluetoothAdapter
+    -BluetoothDevice device
+    -BluetoothDeviceManager deviceManager
+    -<BluetoothSocket, Unit> onDeviceDisconnected
+    +run(): void
+    -manageMyConnectedSocket(BluetoothSocket socket): void
+  }
+  
+  class ServerThread {
+    -MainActivity activity
+    -BluetoothAdapter bluetoothAdapter
+    -BluetoothDeviceManager deviceManager
+    -<BluetoothSocket, Unit> onDeviceDisconnected
+    -<String, Unit>? onServerSocketCreated
+    -BluetoothServerSocket serverSocket
+    +run(): void
+    -manageMyConnectedSocket(BluetoothSocket socket): void
+    +close(): void
+  }
+
+}
+
+' Relationships between classes
+
+CommunicationChannelThread --> MessageHandler: sends received messages to
+BasicBluetoothCommunicationThread <|-- ClientThread: extends
+BasicBluetoothCommunicationThread <|-- ServerThread: extends
+BasicBluetoothCommunicationThread ..> CommunicationChannelThread: manages
+
+
+' New relationships for the Bluetooth management classes
+BasicBluetoothCommunication <|.. BluetoothCommunicationManager: implements
+BluetoothCommunicationManager <|-- BluetoothClientManager: extends
+BluetoothCommunicationManager <|-- BluetoothServerManager: extends
+BluetoothClientManager ..> ClientThread: creates
+BluetoothServerManager ..> ServerThread: creates
+@enduml

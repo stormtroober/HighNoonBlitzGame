@@ -1,0 +1,67 @@
+@startuml messages
+
+package "Messages" {
+  class MessageComposed {
+    -JSONObject message
+    -int purpose
+    +getMessage(): JSONObject
+    +getPurpose(): int
+    +toString(): String
+  }
+  
+  class MessageBuilder {
+    -JSONObject message
+    -int purpose
+    +addMessageParameter(String key, Any value): MessageBuilder
+    +addMessage(JSONObject message): MessageBuilder
+    +setPurpose(int purpose): MessageBuilder
+    +build(): MessageComposed
+    +fromString(String jsonString): MessageBuilder
+  }
+  
+  class MessageFactory {
+    +{static} createReadyMessage(boolean isReady): MessageComposed
+    +{static} createConfigurationMessage(List<String> devicesMac): MessageComposed
+    +{static} createElectionMessage(): MessageComposed
+    +{static} createInfoSharingMessage(String masterAddress, boolean isReady): MessageComposed
+    +{static} createElectionAcknowledgeMessage(): MessageComposed
+    +{static} createConsistencyCheckRequestMessage(): MessageComposed
+    +{static} createConsistencyCheckReplyMessage(List<String> macAddresses): MessageComposed
+    +{static} createGameStartMessage(): MessageComposed
+    +{static} createBackToLobbyGameListMessage(): MessageComposed
+    +{static} createElectionInGameFinishedMessage(): MessageComposed
+    +{static} createEndGameMessage(Long timeDifference): MessageComposed
+  }
+  
+  class MessageHandler {
+    -MainController mainController
+    -BluetoothHandler bluetoothHandler
+    -CoroutineScope backgroundScope
+    +handleMessage(Message msg): void
+  }
+
+    enum Purposes {
+    +{static} NETWORK_ACK: int = 1
+    +{static} UPDATE_CONNECTED_LIST: int = 2
+    +{static} READY: int = 3
+    +{static} CONFIGURATION: int = 4
+    +{static} ELECTION_REQUEST: int = 5
+    +{static} INFO_SHARING: int = 6
+    +{static} ELECTION_ACK: int = 7
+    +{static} CONSISTENCY_CHECK_REQUEST: int = 8
+    +{static} CONSISTENCY_CHECK_REPLY: int = 9
+    +{static} GAME_START: int = 10
+    +{static} BACK_TO_LOBBY_GAMELIST: int = 11
+    +{static} END_GAME: int = 12
+    +{static} ELECTION_INGAME_FINISHED: int = 13
+  }
+}
+
+MessageComposed +-- MessageBuilder: contains as companion
+MessageBuilder ..> MessageComposed: creates
+MessageFactory ..> MessageBuilder: uses
+MessageHandler --> MessageComposed: processes
+MessageComposed ..> Purposes: uses for message type
+MessageFactory ..> Purposes: uses for message type
+MessageHandler ..> Purposes: dispatches based on
+@enduml

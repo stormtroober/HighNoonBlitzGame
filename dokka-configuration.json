@@ -1,0 +1,20 @@
+{
+  "outputDir": "./public",
+  "sourceSets": [
+    {
+      "sourceSetID": {
+        "scopeId": "moduleName",
+        "sourceSetName": "main"
+      },
+      "sourceRoots": [
+        "app/src/main/java"
+      ]
+    }
+  ],
+  "pluginsClasspath": [
+    "./jars/dokka-base-2.0.0.jar",
+    "./jars/kotlinx-html-jvm-0.8.0.jar",
+    "./jars/analysis-kotlin-descriptors-2.0.0.jar",
+    "./jars/freemarker-2.3.31.jar"
+  ]
+}

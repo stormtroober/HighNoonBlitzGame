@@ -1,0 +1,66 @@
+@startuml
+hide empty members
+skinparam shadowing false
+
+' Controller Layer
+package "Controller" {
+  abstract class BaseController {
+    # activity: MainActivity
+    + setNavController(navController: NavController)
+  }
+
+  class MainController {
+    - lobbyController: LobbyController
+    - gameController: GameController
+    - startGame()
+  }
+
+  class LobbyController {
+    - bluetoothHandler: LobbyBluetoothHandlerInterface
+    - _deviceManager: BluetoothDeviceManager
+    - startGame: () -> Unit
+    - consistencyCheckCallback: ConsistencyCheckCallback
+    - networkConsistencyChecker: NetworkConsistencyChecker
+    - informClientsAndStartGame()
+    + startConsistencyCheck()
+    + startLobbyAsServer(onServerSocketCreated: ((String) -> Unit)?)
+    + startLobby()
+    + stopBluetoothServer()
+    - startBluetoothServer(onServerSocketCreated: ((String) -> Unit)?)
+    + activateDiscovery()
+    + notifyReadiness(isReady: Boolean)
+  }
+
+  class GameController {
+    - bluetoothHandler: BluetoothHandlerInterface
+    - _deviceManager: BluetoothDeviceManager
+    - gameModel: GameModel
+    + iAmCoordinator()
+    + electionOnGoing()
+    + startGame()
+    + getGameResults(): SnapshotStateList<Pair<String, Long>>
+    - startButtonTimer()
+    - waitForAllMessagesOrTimeout()
+    + endGameForDevice(device: BluetoothDevice, timeDifference: Long)
+    + buttonGamePressed()    + getGameStatus(): MutableState<GameStatus>
+
+    + getGameStatus(): MutableState<GameStatus>
+    + backToLobby(): AppRoute?
+  }
+
+
+
+  BaseController <|-- LobbyController
+  BaseController <|-- GameController
+  MainController *-- LobbyController
+  MainController *-- GameController
+}
+
+class BluetoothHandlerProvider <<object>> {
+}
+
+LobbyController --> BluetoothHandlerProvider
+GameController --> BluetoothHandlerProvider
+
+
+@enduml

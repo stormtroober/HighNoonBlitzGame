@@ -1,0 +1,37 @@
+@startuml Server-Client Lobby Game Use Cases
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor Server
+actor Client
+
+rectangle "High Noon Blitz" {
+  usecase "Create Lobby" as UC1
+  usecase "Start Match" as UC2
+  usecase "Press Game Button" as UC3
+  usecase "Go Back to Lobby" as UC4
+  usecase "Join Lobby" as UC5
+  usecase "Become Ready/Not Ready" as UC6
+
+  ' Dependencies between use cases
+  UC1 <.. UC2 : <<extend>>
+  UC2 <.. UC3 : <<extend>>
+  UC3 <.. UC4 : <<extend>>
+  UC5 <.. UC6 : <<extend>>
+}
+
+Server --> UC1
+Server --> UC2
+Server --> UC3
+Server --> UC4
+
+Client --> UC3
+Client --> UC4
+Client --> UC5
+Client --> UC6
+
+note "Only server can start match when\nall clients are ready" as N1
+N1 .. UC2
+
+@enduml

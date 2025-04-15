@@ -1,0 +1,36 @@
+@startuml
+!theme plain
+
+actor Client1
+actor Client2
+actor Server
+
+== Server Startup ==
+Server -> Server: startBluetoothServer()
+Server -> Server: Instantiate ServerThread
+Server -> Server: Set MasterDevice
+
+== Client2 Connection to Server ==
+Client2 -> Server: Socket connection
+alt Connection successful
+    Server -> Client2: CONFIGURATION (Empty MAC address list)
+Client2 -> Client2: Set MasterDevice (Server)
+
+== Client1 Connection to Server ==
+Client1 -> Server: Socket connection
+alt Connection successful
+    Server -> Client1: CONFIGURATION (MAC address connected list)
+Client1 -> Client1: Set MasterDevice (Server)
+    == Client1 Connection to Client2 ==
+Client1 -> Client2: Socket connection
+alt Connection successful
+    Client2 -> Client1: INFO_SHARING (Server address, readiness state)
+    Client1 -> Client1: Update device state
+end
+
+    
+end
+
+== Fully Connected Network ==
+note over Client2: The fully connected network is now established
+@enduml

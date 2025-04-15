@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">High Noon Blitz</string>
+    <string name="create_lobby">Create Lobby</string>
+    <string name="join_lobby">Join Lobby</string>
+    <string name="search_for_lobby">Search for lobby</string>
+    <string name="start_game">Start Game</string>
+</resources>
